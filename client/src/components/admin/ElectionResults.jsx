@@ -1,0 +1,227 @@
+import { useState, useEffect } from 'react';
+import api from '../../api/axios';
+import { RefreshCw, Trophy, AlertTriangle, Trash2, Monitor, LayoutGrid } from 'lucide-react';
+
+const ElectionResults = ({ electionId }) => {
+    const [aggregatedResults, setAggregatedResults] = useState([]);
+    const [boothWiseResults, setBoothWiseResults] = useState([]);
+    const [positions, setPositions] = useState([]);
+    const [electionStatus, setElectionStatus] = useState('NOT_STARTED');
+    const [loading, setLoading] = useState(true);
+    const [lastUpdated, setLastUpdated] = useState(new Date());
+    const [activeTab, setActiveTab] = useState('position'); // 'position' or 'booth'
+
+    const fetchData = async () => {
+        if (!electionId) return;
+        try {
+            const [resultsRes, statusRes, positionsRes] = await Promise.all([
+                api.get(`/vote/results?electionId=${electionId}`),
+                api.get(`/election/${electionId}`),
+                api.get(`/positions?electionId=${electionId}`)
+            ]);
+
+            setAggregatedResults(resultsRes.data.aggregated || []);
+            setBoothWiseResults(resultsRes.data.boothWise || []);
+            setElectionStatus(statusRes.data.status);
+            setPositions(positionsRes.data);
+            setLastUpdated(new Date());
+            setLoading(false);
+        } catch (err) {
+            console.error("Error fetching data:", err);
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+        const interval = setInterval(fetchData, 5000);
+        return () => clearInterval(interval);
+    }, [electionId]);
+
+    const handleResetResults = async () => {
+        if (!window.confirm("Are you sure you want to RESET all system results? This action clears all votes across ALL booths and cannot be undone.")) {
+            return;
+        }
+
+        try {
+            await api.post(`/election/${electionId}/reset`);
+            fetchData();
+        } catch (err) {
+            console.error("Failed to reset results:", err);
+            alert("Failed to reset results.");
+        }
+    };
+
+    if (loading && aggregatedResults.length === 0 && positions.length === 0) {
+        return <div className="text-center p-12 text-gray-500 animate-pulse">Computing system results...</div>;
+    }
+
+    const isLive = electionStatus === 'RUNNING';
+    const isStopped = electionStatus === 'STOPPED';
+
+    return (
+        <div className="space-y-6">
+            {/* 1. Header & Controls */}
+            <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                    <h2 style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <Trophy className={isLive ? "text-green-500 animate-pulse" : "text-yellow-500"} />
+                        {isLive ? "Live System Results" : isStopped ? "Final Election Results" : "Election Results"}
+                    </h2>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                        Last Updated: {lastUpdated.toLocaleTimeString()}
+                    </p>
+                </div>
+
+                <div className="flex-center" style={{ gap: '0.75rem' }}>
+                    <button onClick={fetchData} className="btn btn-ghost" title="Refresh Now">
+                        <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                    </button>
+                    <button onClick={handleResetResults} className="btn btn-ghost" style={{ color: 'var(--danger)' }} title="Clear All Data">
+                        <Trash2 size={20} />
+                    </button>
+                </div>
+            </div>
+
+            {/* 2. Navigation Tabs */}
+            <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--neutral-200)', paddingBottom: '0.5rem' }}>
+                <button 
+                    onClick={() => setActiveTab('position')}
+                    className={`btn ${activeTab === 'position' ? 'btn-primary' : 'btn-ghost'}`}
+                    style={{ borderRadius: 'var(--radius-full)', padding: '0.5rem 1.5rem' }}
+                >
+                    <LayoutGrid size={18} /> By Position (Combined)
+                </button>
+                <button 
+                    onClick={() => setActiveTab('booth')}
+                    className={`btn ${activeTab === 'booth' ? 'btn-primary' : 'btn-ghost'}`}
+                    style={{ borderRadius: 'var(--radius-full)', padding: '0.5rem 1.5rem' }}
+                >
+                    <Monitor size={18} /> By Booth Breakdown
+                </button>
+            </div>
+
+            {/* 3. Results Content */}
+            {activeTab === 'position' ? (
+                <div className="grid-cols-2">
+                    {positions.map(pos => {
+                        const candidates = (pos.candidates || []).map(c => {
+                            const resCand = aggregatedResults.find(r => r.id === c.id);
+                            return { ...c, votes: resCand ? resCand.votes : 0 };
+                        });
+
+                        const totalVotes = candidates.reduce((sum, c) => sum + c.votes, 0);
+
+                        // Group candidates by votes
+                        const grouped = candidates.reduce((acc, candidate) => {
+                            if (!acc[candidate.votes]) {
+                                acc[candidate.votes] = [];
+                            }
+                            acc[candidate.votes].push(candidate);
+                            return acc;
+                        }, {});
+
+                        const groupedArray = Object.entries(grouped)
+                            .map(([votes, list]) => ({
+                                votes: Number(votes),
+                                list,
+                                names: list.map(c => c.name).join(", ")
+                            }))
+                            .sort((a, b) => b.votes - a.votes);
+
+                        return (
+                            <div key={pos.id} className="card">
+                                <div className="section-header" style={{ borderBottomColor: 'var(--neutral-100)' }}>
+                                    <h3 style={{ fontSize: '1.1rem' }}>{pos.title}</h3>
+                                    <span className="badge badge-neutral">{totalVotes} Votes</span>
+                                </div>
+                                <div className="space-y-4" style={{ marginTop: '1rem' }}>
+                                    {groupedArray.map((group, idx) => {
+                                        const isUnopposed = candidates.length === 1;
+                                        const percentage = isUnopposed ? 100 : (totalVotes > 0 ? ((group.votes / totalVotes) * 100).toFixed(1) : 0);
+                                        const isWinner = (idx === 0 && group.votes > 0) || isUnopposed;
+                                        return (
+                                            <div key={group.votes}>
+                                                <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
+                                                    <span style={{ fontWeight: isWinner ? 700 : 500 }}>
+                                                        {isWinner && <Trophy size={14} style={{ color: '#fbbf24', display: 'inline', marginRight: '4px' }} />}
+                                                        {group.names}
+                                                    </span>
+                                                    <span style={{ fontWeight: 600 }}>
+                                                        {isUnopposed ? 'Declared Winner (Unopposed)' : `${group.votes} (${percentage}%)`}
+                                                    </span>
+                                                </div>
+                                                <div style={{ width: '100%', height: '8px', background: 'var(--neutral-100)', borderRadius: '4px', overflow: 'hidden' }}>
+                                                    <div style={{ 
+                                                        width: `${percentage}%`, 
+                                                        height: '100%', 
+                                                        background: isWinner ? 'var(--primary)' : 'var(--neutral-300)',
+                                                        transition: 'width 0.5s ease-out'
+                                                    }}></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {candidates.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>No candidates</p>}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="space-y-8">
+                    {boothWiseResults.map(booth => (
+                        <div key={booth.boothId} className="card" style={{ borderLeft: '4px solid var(--primary)' }}>
+                            <div className="section-header">
+                                <h3 style={{ fontSize: '1.25rem', color: 'var(--primary)' }}>{booth.boothName}</h3>
+                                <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Station ID: {booth.boothId.split('-')[0]}</span>
+                            </div>
+                            <div className="grid-cols-2" style={{ marginTop: '1.5rem', gap: '1.5rem' }}>
+                                {booth.positions.map(pos => {
+                                    const totalBoothVotes = pos.candidates.reduce((sum, c) => sum + c.votes, 0);
+
+                                    // Group candidates by votes
+                                    const grouped = (pos.candidates || []).reduce((acc, candidate) => {
+                                        if (!acc[candidate.votes]) {
+                                            acc[candidate.votes] = [];
+                                        }
+                                        acc[candidate.votes].push(candidate);
+                                        return acc;
+                                    }, {});
+
+                                    const groupedArray = Object.entries(grouped)
+                                        .map(([votes, list]) => ({
+                                            votes: Number(votes),
+                                            names: list.map(c => c.name).join(", ")
+                                        }))
+                                        .sort((a, b) => b.votes - a.votes);
+
+                                    return (
+                                        <div key={pos.id} className="p-3 border rounded-lg bg-white shadow-sm">
+                                            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.75rem', borderBottom: '1px solid var(--neutral-100)', paddingBottom: '0.5rem' }}>
+                                                {pos.title}
+                                            </h4>
+                                            <div className="space-y-2">
+                                                {groupedArray.map(group => (
+                                                    <div key={group.votes} className="flex-between text-sm">
+                                                        <span style={{ color: 'var(--neutral-600)' }}>{group.names}</span>
+                                                        <span style={{ fontWeight: 600 }}>{group.votes}</span>
+                                                    </div>
+                                                ))}
+                                                {pos.candidates.length === 0 && <p className="text-xs italic text-gray-400">No votes recorded</p>}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                {booth.positions.length === 0 && <p className="text-center py-4 text-gray-500 w-full" style={{ gridColumn: 'span 2' }}>This booth has no assigned positions or no votes yet.</p>}
+                            </div>
+                        </div>
+                    ))}
+                    {boothWiseResults.length === 0 && <p className="text-center py-12 text-gray-500">No active booths found.</p>}
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default ElectionResults;

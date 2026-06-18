@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id       String @id @default(uuid())
+  username String @unique
+  password String // Hashed
+}
+
+model Election {
+  id          String   @id @default(uuid())
+  name        String   @default("Default Election")
+  status      String   @default("NOT_STARTED") // NOT_STARTED, RUNNING, PAUSED, STOPPED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  positions   Position[]
+  booths      Booth[]
+  votes       Vote[]
+}
+
+model Position {
+  id          String      @id @default(uuid())
+  title       String
+  order       Int         // Removed @unique, will use @@unique below
+  electionId  String
+  election    Election    @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  candidates  Candidate[]
+  votes       Vote[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([electionId, order])
+}
+
+model Candidate {
+  id          String   @id @default(uuid())
+  name        String
+  photoUrl    String?
+  symbolUrl   String?
+  positionId  String
+  position    Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  votes       Vote[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  order       Int      @default(0)// Order within the position
+}
+
+model Vote {
+  id          String    @id @default(uuid())
+  electionId  String
+  positionId  String
+  candidateId String
+  sessionId   String    // To group votes by a single voter session (audit)
+  boothId     String?   // Track which booth cast the vote
+  timestamp   DateTime  @default(now())
+  
+  election    Election  @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  position    Position  @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  booth       Booth?    @relation(fields: [boothId], references: [id])
+}
+
+model Booth {
+  id              String   @id @default(uuid())
+  name            String
+  status          String   @default("IDLE") // IDLE, ACTIVE, LOCKED
+  isActive        Boolean  @default(true)  // Whether the booth is enabled for setup
+  currentSessionId String? @unique // Ensure one session per booth
+  passkey         String?  // Optional for secure setup
+  electionId      String
+  positionIds     String?  // JSON array of position IDs assigned to this booth
+  election        Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  lastActivity    DateTime @default(now())
+  votes           Vote[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  details   String?
+  timestamp DateTime @default(now())
+}
