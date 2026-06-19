@@ -127,8 +127,8 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
 
                 <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                    gap: '1.5rem',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+                    gap: '1.25rem',
                     marginBottom: '3rem'
                 }}>
                     {currentPosition.candidates.map(candidate => {
@@ -146,23 +146,23 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
                                     boxShadow: isSelected ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
                                     cursor: 'pointer',
                                     position: 'relative',
-                                    padding: '1.5rem'
+                                    padding: '1.25rem 1rem'
                                 }}
                             >
                                 {isSelected && (
                                     <div style={{
-                                        position: 'absolute', top: '1rem', right: '1rem',
+                                        position: 'absolute', top: '0.75rem', right: '0.75rem',
                                         color: 'white', background: 'var(--primary)',
                                         borderRadius: '50%', padding: '0.25rem'
                                     }}>
-                                        <Check size={16} />
+                                        <Check size={14} />
                                     </div>
                                 )}
 
                                 <div style={{
-                                    width: '8rem', height: '8rem', borderRadius: '50%',
+                                    width: '7rem', height: '7rem', borderRadius: '50%',
                                     overflow: 'hidden', background: 'var(--neutral-200)',
-                                    marginBottom: '1rem', border: '3px solid white', boxShadow: 'var(--shadow-md)'
+                                    marginBottom: '0.75rem', border: '3px solid white', boxShadow: 'var(--shadow-md)'
                                 }}>
                                     {candidate.photoUrl ? (
                                         <img
@@ -171,16 +171,16 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
                                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                         />
                                     ) : (
-                                        <div className="flex-center" style={{ width: '100%', height: '100%', fontSize: '3rem', fontWeight: 700, color: 'var(--neutral-400)' }}>
+                                        <div className="flex-center" style={{ width: '100%', height: '100%', fontSize: '2.5rem', fontWeight: 700, color: 'var(--neutral-400)' }}>
                                             {candidate.name.charAt(0)}
                                         </div>
                                     )}
                                 </div>
 
-                                <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>{candidate.name}</h3>
+                                <h3 style={{ fontSize: '1.15rem', marginBottom: '0.25rem', textAlign: 'center' }}>{candidate.name}</h3>
 
                                 {candidate.symbolUrl && (
-                                    <div style={{ height: '5rem', width: '5rem', marginTop: '0.75rem' }}>
+                                    <div style={{ height: '4rem', width: '4rem', marginTop: '0.5rem' }}>
                                         <img src={getImageUrl(candidate.symbolUrl)} alt="Symbol" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                     </div>
                                 )}

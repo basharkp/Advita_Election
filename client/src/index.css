@@ -376,7 +376,7 @@ h6 {
 
 .wizard-card {
   width: 100%;
-  max-width: 800px;
+  max-width: 1000px;
   background: white;
   border-radius: var(--radius-xl);
   padding: var(--space-2xl);
