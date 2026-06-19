@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../../api/axios';
+import api, { BASE_URL, getImageUrl } from '../../api/axios';
 import { Trash2, Plus, Upload, Pencil, Crop as CropIcon, X, Check, ChevronRight, GripVertical, AlertTriangle, ImageIcon } from 'lucide-react';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '../../utils/cropImage';
@@ -61,7 +61,7 @@ function SortableCandidateRow({ candidate, activeId, onEdit, onDelete, isEditabl
             {/* Photo */}
             <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-neutral-200 bg-neutral-100 relative">
                 {candidate.photoUrl ? (
-                    <img src={`http://localhost:5000/${candidate.photoUrl}`} alt={candidate.name} className="w-full h-full object-cover" />
+                    <img src={getImageUrl(candidate.photoUrl)} alt={candidate.name} className="w-full h-full object-cover" />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center bg-neutral-100 text-neutral-400">
                         <span className="text-[10px] font-bold">N/A</span>
@@ -82,7 +82,7 @@ function SortableCandidateRow({ candidate, activeId, onEdit, onDelete, isEditabl
             {/* Symbol */}
             {candidate.symbolUrl && (
                 <div className="w-8 h-8 flex-shrink-0 border border-neutral-100 rounded-sm p-0.5 bg-white" title="Party Symbol">
-                    <img src={`http://localhost:5000/${candidate.symbolUrl}`} alt="Symbol" className="w-full h-full object-contain" />
+                    <img src={getImageUrl(candidate.symbolUrl)} alt="Symbol" className="w-full h-full object-contain" />
                 </div>
             )}
 
@@ -279,10 +279,10 @@ const CandidateManager = ({ electionId }) => {
         setPosId(candidate.positionId);
 
         setPhoto(null);
-        setPhotoPreview(candidate.photoUrl ? `http://localhost:5000/${candidate.photoUrl}` : null);
+        setPhotoPreview(getImageUrl(candidate.photoUrl));
 
         setSymbol(null);
-        setSymbolPreview(candidate.symbolUrl ? `http://localhost:5000/${candidate.symbolUrl}` : null);
+        setSymbolPreview(getImageUrl(candidate.symbolUrl));
     };
 
     const toggleGroup = (pid) => {

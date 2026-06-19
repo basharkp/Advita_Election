@@ -6,6 +6,7 @@ const prisma = new PrismaClient();
 
 const deleteFile = (filepath) => {
     if (!filepath) return;
+    if (filepath.startsWith('http://') || filepath.startsWith('https://')) return;
     const fullPath = path.join(__dirname, '..', filepath);
     fs.unlink(fullPath, (err) => {
         if (err) console.error("Failed to delete local file: ", err);

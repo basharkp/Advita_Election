@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
 import VoteContext from '../../context/VoteContext';
 import { ArrowRight, Check, ArrowLeft } from 'lucide-react';
+import { BASE_URL, getImageUrl } from '../../api/axios';
 
 const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId, sessionId }) => {
     const { selectCandidate, votes, submitVotes } = useContext(VoteContext);
@@ -165,7 +166,7 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
                                 }}>
                                     {candidate.photoUrl ? (
                                         <img
-                                            src={`http://localhost:5000/${candidate.photoUrl}`}
+                                            src={getImageUrl(candidate.photoUrl)}
                                             alt={candidate.name}
                                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                         />
@@ -180,7 +181,7 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
 
                                 {candidate.symbolUrl && (
                                     <div style={{ height: '5rem', width: '5rem', marginTop: '0.75rem' }}>
-                                        <img src={`http://localhost:5000/${candidate.symbolUrl}`} alt="Symbol" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                        <img src={getImageUrl(candidate.symbolUrl)} alt="Symbol" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                     </div>
                                 )}
                             </button>
