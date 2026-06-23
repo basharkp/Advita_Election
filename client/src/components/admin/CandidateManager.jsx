@@ -253,7 +253,6 @@ const CandidateManager = ({ electionId }) => {
         setSymbol(null);
         setSymbolPreview(null);
         setEditingId(null);
-        if (positions.length > 0) setPosId(positions[0].id);
 
         const photoInput = document.getElementById('photo-input');
         if (photoInput) photoInput.value = '';
