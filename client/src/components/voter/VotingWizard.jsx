@@ -42,7 +42,14 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
     // Summary View
     if (currentStep === positions.length) {
         return (
-            <div className="voter-layout">
+            <div className="voter-layout" style={{ position: 'relative' }}>
+                <div style={{ position: 'absolute', top: '1.5rem', right: '2rem' }}>
+                    <img 
+                        src="/school_logo.png" 
+                        alt="School Logo" 
+                        style={{ height: '2.5rem', objectFit: 'contain', background: 'white', padding: '0.2rem 0.6rem', borderRadius: '8px', boxShadow: 'var(--shadow-sm)' }}
+                    />
+                </div>
                 <div className="wizard-card animate-fade-in">
                     <h2 style={{ textAlign: 'center', marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
                         Confirm Your Votes
@@ -91,6 +98,15 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
     return (
         <div className="voter-layout" style={{ justifyContent: 'flex-start', paddingTop: '2rem', position: 'relative' }}>
             
+            {/* School Logo */}
+            <div style={{ position: 'absolute', top: '1rem', right: '1.5rem' }}>
+                <img 
+                    src="/school_logo.png" 
+                    alt="School Logo" 
+                    style={{ height: '2.5rem', objectFit: 'contain', background: 'white', padding: '0.2rem 0.6rem', borderRadius: '8px', boxShadow: 'var(--shadow-sm)' }}
+                />
+            </div>
+
             {/* Top Bar for Booth Controls */}
             {onChangeBooth && (
                 <div style={{ position: 'absolute', top: '1rem', left: '1rem' }}>
