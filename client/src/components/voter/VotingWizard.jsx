@@ -47,7 +47,7 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
                     <img 
                         src="/school_logo.png" 
                         alt="School Logo" 
-                        style={{ height: '2.5rem', objectFit: 'contain', background: 'white', padding: '0.2rem 0.6rem', borderRadius: '8px', boxShadow: 'var(--shadow-sm)' }}
+                        style={{ height: '4.5rem', objectFit: 'contain', background: 'white', padding: '0.4rem 0.8rem', borderRadius: '10px', boxShadow: 'var(--shadow-md)' }}
                     />
                 </div>
                 <div className="wizard-card animate-fade-in">
@@ -99,11 +99,11 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
         <div className="voter-layout" style={{ justifyContent: 'flex-start', paddingTop: '2rem', position: 'relative' }}>
             
             {/* School Logo */}
-            <div style={{ position: 'absolute', top: '1rem', right: '1.5rem' }}>
+            <div style={{ position: 'absolute', top: '1rem', right: '2rem' }}>
                 <img 
                     src="/school_logo.png" 
                     alt="School Logo" 
-                    style={{ height: '2.5rem', objectFit: 'contain', background: 'white', padding: '0.2rem 0.6rem', borderRadius: '8px', boxShadow: 'var(--shadow-sm)' }}
+                    style={{ height: '4.5rem', objectFit: 'contain', background: 'white', padding: '0.4rem 0.8rem', borderRadius: '10px', boxShadow: 'var(--shadow-md)' }}
                 />
             </div>
 
