@@ -55,7 +55,7 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: '0.2rem 0.4rem'
+                    padding: '0'
                 }}>
                     <img 
                         src="/school_logo.png" 
@@ -124,7 +124,7 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '0.2rem 0.4rem'
+                padding: '0'
             }}>
                 <img 
                     src="/school_logo.png" 

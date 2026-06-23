@@ -45,7 +45,7 @@ const WaitingScreen = ({ status, onStart, boothName, isBoothMode, electionName, 
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: '0.2rem 0.5rem'
+                    padding: '0'
                 }}>
                     <img 
                         src="/school_logo.png" 
