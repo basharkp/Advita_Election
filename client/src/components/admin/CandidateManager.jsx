@@ -154,7 +154,13 @@ const CandidateManager = ({ electionId }) => {
             const initialExpanded = pRes.data.reduce((acc, p) => ({ ...acc, [p.id]: true }), {});
             setExpandedGroups(prev => Object.keys(prev).length === 0 ? initialExpanded : prev);
 
-            if (pRes.data.length > 0 && !posId && !editingId) setPosId(pRes.data[0].id);
+            setPosId(currentPosId => {
+                if (pRes.data.length > 0) {
+                    const isValidPos = pRes.data.some(p => p.id === currentPosId);
+                    return isValidPos ? currentPosId : pRes.data[0].id;
+                }
+                return currentPosId;
+            });
         } catch (err) {
             console.error("Error fetching data:", err);
         }
