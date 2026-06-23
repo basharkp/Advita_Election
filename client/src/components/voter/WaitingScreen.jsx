@@ -35,11 +35,22 @@ const WaitingScreen = ({ status, onStart, boothName, isBoothMode, electionName, 
 
             {/* Header / Context */}
             <div className="flex-center" style={{ flexDirection: 'column', marginBottom: '3rem', marginTop: onChangeBooth ? '2rem' : '0' }}>
-                <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ 
+                    marginBottom: '1.5rem',
+                    background: 'white', 
+                    borderRadius: '12px', 
+                    boxShadow: 'var(--shadow-sm)',
+                    height: '6rem',
+                    width: '12rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0.2rem 0.5rem'
+                }}>
                     <img 
                         src="/school_logo.png" 
                         alt="Advita International School Logo" 
-                        style={{ height: '5rem', objectFit: 'contain', background: 'white', padding: '0.4rem 1.2rem', borderRadius: '12px', boxShadow: 'var(--shadow-sm)' }} 
+                        style={{ height: '100%', width: '100%', objectFit: 'contain' }} 
                     />
                 </div>
                 

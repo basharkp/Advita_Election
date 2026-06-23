@@ -43,11 +43,24 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
     if (currentStep === positions.length) {
         return (
             <div className="voter-layout" style={{ position: 'relative' }}>
-                <div style={{ position: 'absolute', top: '1.5rem', right: '2rem' }}>
+                <div style={{ 
+                    position: 'absolute', 
+                    top: '1.5rem', 
+                    right: '2rem', 
+                    background: 'white', 
+                    borderRadius: '10px', 
+                    boxShadow: 'var(--shadow-md)',
+                    height: '4.5rem',
+                    width: '9rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0.2rem 0.4rem'
+                }}>
                     <img 
                         src="/school_logo.png" 
                         alt="School Logo" 
-                        style={{ height: '4.5rem', objectFit: 'contain', background: 'white', padding: '0.4rem 0.8rem', borderRadius: '10px', boxShadow: 'var(--shadow-md)' }}
+                        style={{ height: '100%', width: '100%', objectFit: 'contain' }}
                     />
                 </div>
                 <div className="wizard-card animate-fade-in">
@@ -99,11 +112,24 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
         <div className="voter-layout" style={{ justifyContent: 'flex-start', paddingTop: '2rem', position: 'relative' }}>
             
             {/* School Logo */}
-            <div style={{ position: 'absolute', top: '1rem', right: '2rem' }}>
+            <div style={{ 
+                position: 'absolute', 
+                top: '1rem', 
+                right: '2rem', 
+                background: 'white', 
+                borderRadius: '10px', 
+                boxShadow: 'var(--shadow-md)',
+                height: '4.5rem',
+                width: '9rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0.2rem 0.4rem'
+            }}>
                 <img 
                     src="/school_logo.png" 
                     alt="School Logo" 
-                    style={{ height: '4.5rem', objectFit: 'contain', background: 'white', padding: '0.4rem 0.8rem', borderRadius: '10px', boxShadow: 'var(--shadow-md)' }}
+                    style={{ height: '100%', width: '100%', objectFit: 'contain' }}
                 />
             </div>
 
