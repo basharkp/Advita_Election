@@ -182,17 +182,7 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
                                     selectCandidate(currentPosition.id, candidate.id);
                                     handleNext();
                                 }}
-                                className="card"
-                                style={{
-                                    display: 'flex', flexDirection: 'column', alignItems: 'center',
-                                    border: isSelected ? '2px solid var(--primary)' : '2px solid transparent',
-                                    background: isSelected ? 'var(--neutral-50)' : 'white',
-                                    transform: isSelected ? 'scale(1.02)' : 'none',
-                                    boxShadow: isSelected ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
-                                    cursor: 'pointer',
-                                    position: 'relative',
-                                    padding: '1.25rem 1rem'
-                                }}
+                                className={`candidate-card ${isSelected ? 'selected' : ''}`}
                             >
                                 {isSelected && (
                                     <div style={{
