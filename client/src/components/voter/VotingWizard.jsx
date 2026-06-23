@@ -215,7 +215,7 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
                                 <h3 style={{ fontSize: '1.15rem', marginBottom: '0.25rem', textAlign: 'center' }}>{candidate.name}</h3>
 
                                 {candidate.symbolUrl && (
-                                    <div style={{ height: '12rem', width: '12rem', marginTop: '0.5rem' }}>
+                                    <div style={{ height: '16rem', width: '16rem', marginTop: '0.5rem' }}>
                                         <img src={getImageUrl(candidate.symbolUrl)} alt="Symbol" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                     </div>
                                 )}
