@@ -136,7 +136,10 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
                         return (
                             <button
                                 key={candidate.id}
-                                onClick={() => selectCandidate(currentPosition.id, candidate.id)}
+                                onClick={() => {
+                                    selectCandidate(currentPosition.id, candidate.id);
+                                    handleNext();
+                                }}
                                 className="card"
                                 style={{
                                     display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -187,21 +190,6 @@ const VotingWizard = ({ positions, onComplete, onCancel, onChangeBooth, boothId,
                             </button>
                         );
                     })}
-                </div>
-
-                {/* Footer Navigation within Card */}
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'auto' }}>
-                    <button
-                        onClick={handleNext}
-                        disabled={!selectedCandidateId}
-                        className="btn btn-primary"
-                        style={{
-                            padding: '1rem 3rem', borderRadius: 'var(--radius-full)',
-                            fontSize: '1.25rem', opacity: !selectedCandidateId ? 0.5 : 1
-                        }}
-                    >
-                        {isLastStep ? 'Review Votes' : 'Next Position'} <ArrowRight size={24} />
-                    </button>
                 </div>
             </div>
         </div>
