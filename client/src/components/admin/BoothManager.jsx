@@ -85,7 +85,33 @@ const BoothForm = memo(({
 
                 {/* Right Column: Position Assignment */}
                 <div>
-                    <label className="label" style={{ fontWeight: 600 }}>Assigned Ballot Positions</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                        <label className="label" style={{ fontWeight: 600, marginBottom: 0 }}>Assigned Ballot Positions</label>
+                        {positions.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const allSelected = selectedPositionIds.length === positions.length;
+                                    if (allSelected) {
+                                        setSelectedPositionIds([]);
+                                    } else {
+                                        setSelectedPositionIds(positions.map(p => p.id));
+                                    }
+                                }}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'var(--primary)',
+                                    cursor: 'pointer',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 600,
+                                    padding: 0,
+                                }}
+                            >
+                                {selectedPositionIds.length === positions.length ? 'Deselect All' : 'Select All'}
+                            </button>
+                        )}
+                    </div>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
                         Only selected positions will appear at this station. Leave empty for all.
                     </p>
