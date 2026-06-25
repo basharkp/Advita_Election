@@ -182,143 +182,73 @@ const PublicResults = () => {
                 </button>
             </div>
 
-            {/* Navigation Tabs */}
-            <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--neutral-200)', paddingBottom: '0.5rem' }}>
-                <button 
-                    onClick={() => setActiveTab('position')}
-                    className={`btn ${activeTab === 'position' ? 'btn-primary' : 'btn-ghost'}`}
-                    style={{ borderRadius: 'var(--radius-full)', padding: '0.5rem 1.5rem' }}
-                >
-                    <LayoutGrid size={18} /> By Position (Combined)
-                </button>
-                <button 
-                    onClick={() => setActiveTab('booth')}
-                    className={`btn ${activeTab === 'booth' ? 'btn-primary' : 'btn-ghost'}`}
-                    style={{ borderRadius: 'var(--radius-full)', padding: '0.5rem 1.5rem' }}
-                >
-                    <Monitor size={18} /> By Booth Breakdown
-                </button>
-            </div>
-
             {/* Combined Results View */}
-            {activeTab === 'position' ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem' }}>
-                    {positions.map(pos => {
-                        const totalVotes = pos.candidates.reduce((sum, c) => sum + c.votes, 0);
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem' }}>
+                {positions.map(pos => {
+                    const totalVotes = pos.candidates.reduce((sum, c) => sum + c.votes, 0);
 
-                        // Group candidates by votes
-                        const grouped = pos.candidates.reduce((acc, candidate) => {
-                            if (!acc[candidate.votes]) {
-                                acc[candidate.votes] = [];
-                            }
-                            acc[candidate.votes].push(candidate);
-                            return acc;
-                        }, {});
+                    // Group candidates by votes
+                    const grouped = pos.candidates.reduce((acc, candidate) => {
+                        if (!acc[candidate.votes]) {
+                            acc[candidate.votes] = [];
+                        }
+                        acc[candidate.votes].push(candidate);
+                        return acc;
+                    }, {});
 
-                        const groupedArray = Object.entries(grouped)
-                            .map(([votes, list]) => ({
-                                votes: Number(votes),
-                                list,
-                                names: list.map(c => c.name).join(", ")
-                            }))
-                            .sort((a, b) => b.votes - a.votes);
+                    const groupedArray = Object.entries(grouped)
+                        .map(([votes, list]) => ({
+                            votes: Number(votes),
+                            list,
+                            names: list.map(c => c.name).join(", ")
+                        }))
+                        .sort((a, b) => b.votes - a.votes);
 
-                        return (
-                            <div key={pos.id} className="card">
-                                <div className="section-header" style={{ borderBottomColor: 'var(--neutral-100)' }}>
-                                    <h3 style={{ fontSize: '1.1rem' }}>{pos.title}</h3>
-                                    <span className="badge badge-neutral">{totalVotes} Votes</span>
-                                </div>
-                                <div className="space-y-4" style={{ marginTop: '1rem' }}>
-                                    {groupedArray.map((group, idx) => {
-                                        const isUnopposed = pos.candidates.length === 1;
-                                        const percentage = isUnopposed ? 100 : (totalVotes > 0 ? ((group.votes / totalVotes) * 100).toFixed(1) : 0);
-                                        const isWinner = (idx === 0 && group.votes > 0) || isUnopposed;
-                                        
-                                        return (
-                                            <div key={group.votes}>
-                                                <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
-                                                    <span style={{ fontWeight: isWinner ? 700 : 500 }}>
-                                                        {isWinner && <Trophy size={14} style={{ color: '#fbbf24', display: 'inline', marginRight: '4px' }} />}
-                                                        {group.names}
-                                                    </span>
-                                                    <span style={{ fontWeight: 600 }}>
-                                                        {isUnopposed ? 'Declared Winner (Unopposed)' : `${group.votes} (${percentage}%)`}
-                                                    </span>
-                                                </div>
-                                                <div style={{ width: '100%', height: '8px', background: 'var(--neutral-100)', borderRadius: '4px', overflow: 'hidden' }}>
-                                                    <div style={{ 
-                                                        width: `${percentage}%`, 
-                                                        height: '100%', 
-                                                        background: isWinner ? 'var(--primary)' : 'var(--neutral-300)',
-                                                        transition: 'width 0.5s ease-out'
-                                                    }}></div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                    {pos.candidates.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>No candidates</p>}
-                                </div>
+                    return (
+                        <div key={pos.id} className="card">
+                            <div className="section-header" style={{ borderBottomColor: 'var(--neutral-100)' }}>
+                                <h3 style={{ fontSize: '1.1rem' }}>{pos.title}</h3>
+                                <span className="badge badge-neutral">{totalVotes} Votes</span>
                             </div>
-                        );
-                    })}
-                    {positions.length === 0 && (
-                        <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic', padding: '3rem', gridColumn: 'span 2' }}>
-                            No results found.
-                        </p>
-                    )}
-                </div>
-            ) : (
-                /* Booth Breakdown View */
-                <div className="space-y-8 animate-fade-in">
-                    {boothWiseResults.map(booth => (
-                        <div key={booth.boothId} className="card" style={{ borderLeft: '4px solid var(--primary)' }}>
-                            <div className="section-header">
-                                <h3 style={{ fontSize: '1.25rem', color: 'var(--primary)' }}>{booth.boothName}</h3>
-                                <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Station ID: {booth.boothId.split('-')[0]}</span>
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', marginTop: '1.5rem', gap: '1.5rem' }}>
-                                {booth.positions.map(pos => {
-                                    // Group candidates by votes
-                                    const grouped = (pos.candidates || []).reduce((acc, candidate) => {
-                                        if (!acc[candidate.votes]) {
-                                            acc[candidate.votes] = [];
-                                        }
-                                        acc[candidate.votes].push(candidate);
-                                        return acc;
-                                    }, {});
-
-                                    const groupedArray = Object.entries(grouped)
-                                        .map(([votes, list]) => ({
-                                            votes: Number(votes),
-                                            names: list.map(c => c.name).join(", ")
-                                        }))
-                                        .sort((a, b) => b.votes - a.votes);
-
+                            <div className="space-y-4" style={{ marginTop: '1rem' }}>
+                                {groupedArray.map((group, idx) => {
+                                    const isUnopposed = pos.candidates.length === 1;
+                                    const percentage = isUnopposed ? 100 : (totalVotes > 0 ? ((group.votes / totalVotes) * 100).toFixed(1) : 0);
+                                    const isWinner = (idx === 0 && group.votes > 0) || isUnopposed;
+                                    
                                     return (
-                                        <div key={pos.id} className="p-3 border rounded-lg bg-white shadow-sm">
-                                            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.75rem', borderBottom: '1px solid var(--neutral-100)', paddingBottom: '0.5rem' }}>
-                                                {pos.title}
-                                            </h4>
-                                            <div className="space-y-2">
-                                                {groupedArray.map(group => (
-                                                    <div key={group.votes} className="flex-between text-sm">
-                                                        <span style={{ color: 'var(--neutral-600)' }}>{group.names}</span>
-                                                        <span style={{ fontWeight: 600 }}>{group.votes}</span>
-                                                    </div>
-                                                ))}
-                                                {pos.candidates.length === 0 && <p className="text-xs italic text-gray-400">No votes recorded</p>}
+                                        <div key={group.votes}>
+                                            <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
+                                                <span style={{ fontWeight: isWinner ? 700 : 500 }}>
+                                                    {isWinner && <Trophy size={14} style={{ color: '#fbbf24', display: 'inline', marginRight: '4px' }} />}
+                                                    {group.names}
+                                                </span>
+                                                <span style={{ fontWeight: 600 }}>
+                                                    {isUnopposed ? 'Declared Winner (Unopposed)' : `${group.votes} (${percentage}%)`}
+                                                </span>
+                                            </div>
+                                            <div style={{ width: '100%', height: '8px', background: 'var(--neutral-100)', borderRadius: '4px', overflow: 'hidden' }}>
+                                                <div style={{ 
+                                                    width: `${percentage}%`, 
+                                                    height: '100%', 
+                                                    background: isWinner ? 'var(--primary)' : 'var(--neutral-300)',
+                                                    transition: 'width 0.5s ease-out'
+                                                }}></div>
                                             </div>
                                         </div>
                                     );
                                 })}
-                                {booth.positions.length === 0 && <p className="text-center py-4 text-gray-500 w-full" style={{ gridColumn: 'span 2' }}>This booth has no assigned positions or no votes yet.</p>}
+                                {pos.candidates.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>No candidates</p>}
                             </div>
                         </div>
-                    ))}
-                    {boothWiseResults.length === 0 && <p className="text-center py-12 text-gray-500">No active booths found.</p>}
-                </div>
-            )}
+                    );
+                })}
+                {positions.length === 0 && (
+                    <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic', padding: '3rem', gridColumn: 'span 2' }}>
+                        No results found.
+                    </p>
+                )}
+            </div>
         </div>
     );
 };
