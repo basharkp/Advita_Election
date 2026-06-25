@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
-import { RefreshCw, Trophy, LayoutGrid, Monitor, Lock, ShieldAlert } from 'lucide-react';
+import api from '../../api/axios';
+import { RefreshCw, Trophy, LayoutGrid, Monitor, Lock, ShieldAlert, FileSearch } from 'lucide-react';
 
 const PublicResults = () => {
     const { electionId } = useParams();
@@ -17,13 +17,11 @@ const PublicResults = () => {
 
     const fetchData = async () => {
         try {
-            // Determine base URL dynamically
-            const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
             const url = electionId 
-                ? `${baseUrl}/vote/public-results?electionId=${electionId}`
-                : `${baseUrl}/vote/public-results`;
+                ? `/vote/public-results?electionId=${electionId}`
+                : `/vote/public-results`;
 
-            const res = await axios.get(url);
+            const res = await api.get(url);
             
             setAggregatedResults(res.data.aggregated || []);
             setBoothWiseResults(res.data.boothWise || []);
@@ -56,6 +54,11 @@ const PublicResults = () => {
                     type: 'private',
                     message: err.response.data.error || 'Results are not public yet.'
                 });
+            } else if (err.response?.status === 404) {
+                setError({
+                    type: 'not_found',
+                    message: err.response.data.error || 'The requested election results could not be found.'
+                });
             } else {
                 setError({
                     type: 'error',
@@ -79,6 +82,32 @@ const PublicResults = () => {
                 <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', fontWeight: 500 }} className="animate-pulse">
                     Retrieving public election results...
                 </p>
+            </div>
+        );
+    }
+
+    if (error && error.type === 'not_found') {
+        return (
+            <div className="flex-center" style={{ minHeight: '80vh', padding: '2rem' }}>
+                <div className="card text-center animate-fade-in" style={{ maxWidth: '500px', padding: '3.5rem 2rem', boxShadow: 'var(--shadow-xl)', borderLeft: '4px solid var(--warning)' }}>
+                    <div style={{
+                        background: 'var(--neutral-100)',
+                        width: '4.5rem',
+                        height: '4.5rem',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 1.5rem',
+                        color: 'var(--warning)'
+                    }}>
+                        <FileSearch size={32} />
+                    </div>
+                    <h2 style={{ fontSize: '1.75rem', marginBottom: '1rem', fontWeight: 800 }}>Election Not Found</h2>
+                    <p style={{ color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '2rem' }}>
+                        {error.message}
+                    </p>
+                </div>
             </div>
         );
     }
