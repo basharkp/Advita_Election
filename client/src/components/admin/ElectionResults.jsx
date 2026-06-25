@@ -113,13 +113,13 @@ const ElectionResults = ({ electionId }) => {
                 {showResultsPublicly && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                            {`${window.location.origin}/results/${electionId}`}
+                            {`${window.location.origin}/#/results/${electionId}`}
                         </span>
                         <button 
                             className="btn btn-outline" 
                             style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }}
                             onClick={() => {
-                                navigator.clipboard.writeText(`${window.location.origin}/results/${electionId}`);
+                                navigator.clipboard.writeText(`${window.location.origin}/#/results/${electionId}`);
                                 alert("Public results link copied to clipboard!");
                             }}
                         >
