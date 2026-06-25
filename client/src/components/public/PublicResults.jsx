@@ -30,11 +30,31 @@ const PublicResults = () => {
                 api.get(posUrl)
             ]);
             
+            const POSITION_PRIORITY = [
+                'head boy',
+                'head girl',
+                'deputy head boy',
+                'deputy head girl'
+            ];
+
+            const getPositionPriority = (title) => {
+                const lower = (title || '').toLowerCase().trim();
+                const index = POSITION_PRIORITY.findIndex(p => lower.includes(p));
+                return index !== -1 ? index : 999;
+            };
+
+            const sortedPositions = (positionsRes.data || []).sort((a, b) => {
+                const priA = getPositionPriority(a.title);
+                const priB = getPositionPriority(b.title);
+                if (priA !== priB) return priA - priB;
+                return (a.order || 0) - (b.order || 0);
+            });
+
             setAggregatedResults(res.data.aggregated || []);
             setBoothWiseResults(res.data.boothWise || []);
             setElectionName(res.data.electionName || 'Election');
             setElectionStatus(res.data.electionStatus || 'NOT_STARTED');
-            setPositions(positionsRes.data || []);
+            setPositions(sortedPositions);
             setLastUpdated(new Date());
             setError(null);
             setLoading(false);
