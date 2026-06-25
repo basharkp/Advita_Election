@@ -21,29 +21,20 @@ const PublicResults = () => {
                 ? `/vote/public-results?electionId=${electionId}`
                 : `/vote/public-results`;
 
-            const res = await api.get(url);
+            const posUrl = electionId
+                ? `/positions?electionId=${electionId}`
+                : `/positions`;
+
+            const [res, positionsRes] = await Promise.all([
+                api.get(url),
+                api.get(posUrl)
+            ]);
             
             setAggregatedResults(res.data.aggregated || []);
             setBoothWiseResults(res.data.boothWise || []);
             setElectionName(res.data.electionName || 'Election');
             setElectionStatus(res.data.electionStatus || 'NOT_STARTED');
-
-            // Unique positions extraction from aggregated results
-            const uniquePositions = [];
-            const posMap = new Map();
-            (res.data.aggregated || []).forEach(cand => {
-                if (!posMap.has(cand.positionId)) {
-                    posMap.set(cand.positionId, {
-                        id: cand.positionId,
-                        title: cand.positionName,
-                        candidates: []
-                    });
-                    uniquePositions.push(posMap.get(cand.positionId));
-                }
-                posMap.get(cand.positionId).candidates.push(cand);
-            });
-
-            setPositions(uniquePositions);
+            setPositions(positionsRes.data || []);
             setLastUpdated(new Date());
             setError(null);
             setLoading(false);
@@ -185,10 +176,15 @@ const PublicResults = () => {
             {/* Combined Results View */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem' }}>
                 {positions.map(pos => {
-                    const totalVotes = pos.candidates.reduce((sum, c) => sum + c.votes, 0);
+                    const candidates = (pos.candidates || []).map(c => {
+                        const resCand = aggregatedResults.find(r => r.id === c.id);
+                        return { ...c, votes: resCand ? resCand.votes : 0 };
+                    });
+
+                    const totalVotes = candidates.reduce((sum, c) => sum + c.votes, 0);
 
                     // Group candidates by votes
-                    const grouped = pos.candidates.reduce((acc, candidate) => {
+                    const grouped = candidates.reduce((acc, candidate) => {
                         if (!acc[candidate.votes]) {
                             acc[candidate.votes] = [];
                         }
@@ -212,7 +208,7 @@ const PublicResults = () => {
                             </div>
                             <div className="space-y-4" style={{ marginTop: '1rem' }}>
                                 {groupedArray.map((group, idx) => {
-                                    const isUnopposed = pos.candidates.length === 1;
+                                    const isUnopposed = candidates.length === 1;
                                     const percentage = isUnopposed ? 100 : (totalVotes > 0 ? ((group.votes / totalVotes) * 100).toFixed(1) : 0);
                                     const isWinner = (idx === 0 && group.votes > 0) || isUnopposed;
                                     
