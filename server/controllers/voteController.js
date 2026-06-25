@@ -213,4 +213,101 @@ const getResults = async (req, res) => {
     }
 };
 
-module.exports = { startSession, castVote, getResults };
+const getPublicResults = async (req, res) => {
+    try {
+        let { electionId } = req.query;
+        if (!electionId) {
+            const defaultElection = await prisma.election.findFirst();
+            if (defaultElection) electionId = defaultElection.id;
+        }
+
+        if (!electionId) {
+            return res.status(404).json({ error: "Election not found" });
+        }
+
+        const election = await prisma.election.findUnique({
+            where: { id: electionId }
+        });
+
+        if (!election) {
+            return res.status(404).json({ error: "Election not found" });
+        }
+
+        if (!election.showResultsPublicly) {
+            return res.status(403).json({ error: "Results are not public yet. Please check back later." });
+        }
+
+        // 1. Get all candidates with their votes aggregated (By Position)
+        const candidates = await prisma.candidate.findMany({
+            where: { position: { electionId } },
+            include: {
+                position: true,
+                _count: {
+                    select: { votes: true }
+                }
+            }
+        });
+
+        const aggregated = candidates.map(c => ({
+            id: c.id,
+            name: c.name,
+            positionId: c.positionId,
+            positionName: c.position.title,
+            votes: c._count.votes,
+            photoUrl: c.photoUrl,
+            symbolUrl: c.symbolUrl
+        }));
+
+        // 2. Get booth-wise breakdown
+        const booths = await prisma.booth.findMany({
+            where: { electionId },
+            include: {
+                votes: {
+                    include: {
+                        candidate: true,
+                        position: true
+                    }
+                }
+            }
+        });
+
+        const boothWise = booths.map(b => {
+            const boothVotes = b.votes;
+            const positionMap = {};
+
+            boothVotes.forEach(v => {
+                if (!positionMap[v.positionId]) {
+                    positionMap[v.positionId] = {
+                        id: v.positionId,
+                        title: v.position.title,
+                        candidates: {}
+                    };
+                }
+                if (!positionMap[v.positionId].candidates[v.candidateId]) {
+                    positionMap[v.positionId].candidates[v.candidateId] = {
+                        id: v.candidateId,
+                        name: v.candidate.name,
+                        votes: 0
+                    };
+                }
+                positionMap[v.positionId].candidates[v.candidateId].votes++;
+            });
+
+            return {
+                boothId: b.id,
+                boothName: b.name,
+                positions: Object.values(positionMap).map(p => ({
+                    ...p,
+                    candidates: Object.values(p.candidates)
+                }))
+            };
+        });
+
+        res.json({ aggregated, boothWise, electionName: election.name, electionStatus: election.status });
+    } catch (e) {
+        console.error("Public results error:", e);
+        res.status(500).json({ error: "Failed to fetch public results" });
+    }
+};
+
+module.exports = { startSession, castVote, getResults, getPublicResults };

@@ -1,135 +1,159 @@
 import { useState, useEffect } from 'react';
-import api from '../../api/axios';
-import { RefreshCw, Trophy, AlertTriangle, Trash2, Monitor, LayoutGrid } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
+import { RefreshCw, Trophy, LayoutGrid, Monitor, Lock, ShieldAlert } from 'lucide-react';
 
-const ElectionResults = ({ electionId }) => {
+const PublicResults = () => {
+    const { electionId } = useParams();
     const [aggregatedResults, setAggregatedResults] = useState([]);
     const [boothWiseResults, setBoothWiseResults] = useState([]);
     const [positions, setPositions] = useState([]);
+    const [electionName, setElectionName] = useState('Election');
     const [electionStatus, setElectionStatus] = useState('NOT_STARTED');
-    const [showResultsPublicly, setShowResultsPublicly] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [lastUpdated, setLastUpdated] = useState(new Date());
     const [activeTab, setActiveTab] = useState('position'); // 'position' or 'booth'
 
     const fetchData = async () => {
-        if (!electionId) return;
         try {
-            const [resultsRes, statusRes, positionsRes] = await Promise.all([
-                api.get(`/vote/results?electionId=${electionId}`),
-                api.get(`/election/${electionId}`),
-                api.get(`/positions?electionId=${electionId}`)
-            ]);
+            // Determine base URL dynamically
+            const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const url = electionId 
+                ? `${baseUrl}/vote/public-results?electionId=${electionId}`
+                : `${baseUrl}/vote/public-results`;
 
-            setAggregatedResults(resultsRes.data.aggregated || []);
-            setBoothWiseResults(resultsRes.data.boothWise || []);
-            setElectionStatus(statusRes.data.status);
-            setShowResultsPublicly(statusRes.data.showResultsPublicly || false);
-            setPositions(positionsRes.data);
+            const res = await axios.get(url);
+            
+            setAggregatedResults(res.data.aggregated || []);
+            setBoothWiseResults(res.data.boothWise || []);
+            setElectionName(res.data.electionName || 'Election');
+            setElectionStatus(res.data.electionStatus || 'NOT_STARTED');
+
+            // Unique positions extraction from aggregated results
+            const uniquePositions = [];
+            const posMap = new Map();
+            (res.data.aggregated || []).forEach(cand => {
+                if (!posMap.has(cand.positionId)) {
+                    posMap.set(cand.positionId, {
+                        id: cand.positionId,
+                        title: cand.positionName,
+                        candidates: []
+                    });
+                    uniquePositions.push(posMap.get(cand.positionId));
+                }
+                posMap.get(cand.positionId).candidates.push(cand);
+            });
+
+            setPositions(uniquePositions);
             setLastUpdated(new Date());
+            setError(null);
             setLoading(false);
         } catch (err) {
-            console.error("Error fetching data:", err);
+            console.error("Error fetching public results:", err);
+            if (err.response?.status === 403) {
+                setError({
+                    type: 'private',
+                    message: err.response.data.error || 'Results are not public yet.'
+                });
+            } else {
+                setError({
+                    type: 'error',
+                    message: 'Failed to connect to the server. Please try again later.'
+                });
+            }
             setLoading(false);
         }
     };
 
     useEffect(() => {
         fetchData();
-        const interval = setInterval(fetchData, 5000);
+        const interval = setInterval(fetchData, 10000);
         return () => clearInterval(interval);
     }, [electionId]);
 
-    const handleTogglePublicResults = async () => {
-        try {
-            const nextVal = !showResultsPublicly;
-            await api.put(`/election/${electionId}`, { showResultsPublicly: nextVal });
-            setShowResultsPublicly(nextVal);
-        } catch (err) {
-            console.error("Failed to toggle public results:", err);
-            alert("Failed to update public results settings.");
-        }
-    };
+    if (loading) {
+        return (
+            <div className="flex-center" style={{ minHeight: '80vh', flexDirection: 'column', gap: '1rem' }}>
+                <div className="loader" style={{ width: '3rem', height: '3rem' }}></div>
+                <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', fontWeight: 500 }} className="animate-pulse">
+                    Retrieving public election results...
+                </p>
+            </div>
+        );
+    }
 
-    const handleResetResults = async () => {
-        if (!window.confirm("Are you sure you want to RESET all system results? This action clears all votes across ALL booths and cannot be undone.")) {
-            return;
-        }
+    if (error && error.type === 'private') {
+        return (
+            <div className="flex-center" style={{ minHeight: '80vh', padding: '2rem' }}>
+                <div className="card text-center animate-fade-in" style={{ maxWidth: '500px', padding: '3.5rem 2rem', boxShadow: 'var(--shadow-xl)' }}>
+                    <div style={{
+                        background: 'var(--neutral-100)',
+                        width: '4.5rem',
+                        height: '4.5rem',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 1.5rem',
+                        color: 'var(--neutral-600)'
+                    }}>
+                        <Lock size={32} />
+                    </div>
+                    <h2 style={{ fontSize: '1.75rem', marginBottom: '1rem', fontWeight: 800 }}>Results Sealed</h2>
+                    <p style={{ color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '2rem' }}>
+                        {error.message}
+                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <button onClick={fetchData} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <RefreshCw size={16} /> Check Again
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
-        try {
-            await api.post(`/election/${electionId}/reset`);
-            fetchData();
-        } catch (err) {
-            console.error("Failed to reset results:", err);
-            alert("Failed to reset results.");
-        }
-    };
-
-    if (loading && aggregatedResults.length === 0 && positions.length === 0) {
-        return <div className="text-center p-12 text-gray-500 animate-pulse">Computing system results...</div>;
+    if (error) {
+        return (
+            <div className="flex-center" style={{ minHeight: '80vh', padding: '2rem' }}>
+                <div className="card text-center animate-fade-in" style={{ maxWidth: '500px', padding: '3.5rem 2rem', borderLeft: '4px solid var(--danger)' }}>
+                    <ShieldAlert size={48} className="text-danger" style={{ margin: '0 auto 1.5rem' }} />
+                    <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Connection Error</h2>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>{error.message}</p>
+                    <button onClick={fetchData} className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', margin: '0 auto' }}>
+                        <RefreshCw size={16} /> Retry
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     const isLive = electionStatus === 'RUNNING';
     const isStopped = electionStatus === 'STOPPED';
 
     return (
-        <div className="space-y-6">
-            {/* 1. Header & Controls */}
+        <div style={{ maxWidth: '1000px', margin: '2rem auto', padding: '0 1rem' }} className="space-y-6">
+            {/* Header Card */}
             <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
-                    <h2 style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span className={`badge ${isLive ? 'badge-success pulse' : isStopped ? 'badge-neutral' : 'badge-warning'}`} style={{ marginBottom: '0.5rem' }}>
+                        {isLive ? 'Live Results' : isStopped ? 'Final Results' : 'Inactive'}
+                    </span>
+                    <h1 style={{ fontSize: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <Trophy className={isLive ? "text-green-500 animate-pulse" : "text-yellow-500"} />
-                        {isLive ? "Live System Results" : isStopped ? "Final Election Results" : "Election Results"}
-                    </h2>
+                        {electionName}
+                    </h1>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                         Last Updated: {lastUpdated.toLocaleTimeString()}
                     </p>
                 </div>
-
-                <div className="flex-center" style={{ gap: '0.75rem' }}>
-                    <button onClick={fetchData} className="btn btn-ghost" title="Refresh Now">
-                        <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
-                    </button>
-                    <button onClick={handleResetResults} className="btn btn-ghost" style={{ color: 'var(--danger)' }} title="Clear All Data">
-                        <Trash2 size={20} />
-                    </button>
-                </div>
+                <button onClick={fetchData} className="btn btn-ghost" title="Refresh Now">
+                    <RefreshCw size={20} />
+                </button>
             </div>
 
-            {/* Public Link Config */}
-            <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: 'var(--neutral-100)', border: '1px dashed var(--neutral-300)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <input 
-                        type="checkbox" 
-                        id="pubResultsToggle" 
-                        checked={showResultsPublicly} 
-                        onChange={handleTogglePublicResults}
-                        style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
-                    />
-                    <label htmlFor="pubResultsToggle" style={{ fontWeight: 600, cursor: 'pointer' }}>
-                        Publish Results Publicly
-                    </label>
-                </div>
-                {showResultsPublicly && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                            {`${window.location.origin}/results/${electionId}`}
-                        </span>
-                        <button 
-                            className="btn btn-outline" 
-                            style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }}
-                            onClick={() => {
-                                navigator.clipboard.writeText(`${window.location.origin}/results/${electionId}`);
-                                alert("Public results link copied to clipboard!");
-                            }}
-                        >
-                            Copy Link
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            {/* 2. Navigation Tabs */}
+            {/* Navigation Tabs */}
             <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--neutral-200)', paddingBottom: '0.5rem' }}>
                 <button 
                     onClick={() => setActiveTab('position')}
@@ -147,19 +171,14 @@ const ElectionResults = ({ electionId }) => {
                 </button>
             </div>
 
-            {/* 3. Results Content */}
+            {/* Combined Results View */}
             {activeTab === 'position' ? (
-                <div className="grid-cols-2">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem' }}>
                     {positions.map(pos => {
-                        const candidates = (pos.candidates || []).map(c => {
-                            const resCand = aggregatedResults.find(r => r.id === c.id);
-                            return { ...c, votes: resCand ? resCand.votes : 0 };
-                        });
-
-                        const totalVotes = candidates.reduce((sum, c) => sum + c.votes, 0);
+                        const totalVotes = pos.candidates.reduce((sum, c) => sum + c.votes, 0);
 
                         // Group candidates by votes
-                        const grouped = candidates.reduce((acc, candidate) => {
+                        const grouped = pos.candidates.reduce((acc, candidate) => {
                             if (!acc[candidate.votes]) {
                                 acc[candidate.votes] = [];
                             }
@@ -183,9 +202,10 @@ const ElectionResults = ({ electionId }) => {
                                 </div>
                                 <div className="space-y-4" style={{ marginTop: '1rem' }}>
                                     {groupedArray.map((group, idx) => {
-                                        const isUnopposed = candidates.length === 1;
+                                        const isUnopposed = pos.candidates.length === 1;
                                         const percentage = isUnopposed ? 100 : (totalVotes > 0 ? ((group.votes / totalVotes) * 100).toFixed(1) : 0);
                                         const isWinner = (idx === 0 && group.votes > 0) || isUnopposed;
+                                        
                                         return (
                                             <div key={group.votes}>
                                                 <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
@@ -208,24 +228,28 @@ const ElectionResults = ({ electionId }) => {
                                             </div>
                                         );
                                     })}
-                                    {candidates.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>No candidates</p>}
+                                    {pos.candidates.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>No candidates</p>}
                                 </div>
                             </div>
                         );
                     })}
+                    {positions.length === 0 && (
+                        <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic', padding: '3rem', gridColumn: 'span 2' }}>
+                            No results found.
+                        </p>
+                    )}
                 </div>
             ) : (
-                <div className="space-y-8">
+                /* Booth Breakdown View */
+                <div className="space-y-8 animate-fade-in">
                     {boothWiseResults.map(booth => (
                         <div key={booth.boothId} className="card" style={{ borderLeft: '4px solid var(--primary)' }}>
                             <div className="section-header">
                                 <h3 style={{ fontSize: '1.25rem', color: 'var(--primary)' }}>{booth.boothName}</h3>
                                 <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Station ID: {booth.boothId.split('-')[0]}</span>
                             </div>
-                            <div className="grid-cols-2" style={{ marginTop: '1.5rem', gap: '1.5rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', marginTop: '1.5rem', gap: '1.5rem' }}>
                                 {booth.positions.map(pos => {
-                                    const totalBoothVotes = pos.candidates.reduce((sum, c) => sum + c.votes, 0);
-
                                     // Group candidates by votes
                                     const grouped = (pos.candidates || []).reduce((acc, candidate) => {
                                         if (!acc[candidate.votes]) {
@@ -270,4 +294,4 @@ const ElectionResults = ({ electionId }) => {
     );
 };
 
-export default ElectionResults;
+export default PublicResults;

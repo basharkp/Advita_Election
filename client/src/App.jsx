@@ -6,6 +6,7 @@ import LoginForm from './components/admin/LoginForm';
 import AdminDashboard from './components/admin/AdminDashboard';
 import VoterFlow from './components/voter/VoterFlow';
 import BoothSelectionPage from './components/voter/BoothSelectionPage';
+import PublicResults from './components/public/PublicResults';
 
 function App() {
   return (
@@ -22,6 +23,10 @@ function App() {
             {/* Voter Routes */}
             <Route path="/" element={<BoothSelectionPage />} />
             <Route path="/vote" element={<VoterFlow />} />
+
+            {/* Public Results Routes */}
+            <Route path="/results/:electionId" element={<PublicResults />} />
+            <Route path="/results" element={<PublicResults />} />
           </Routes>
         </VoteProvider>
       </AuthProvider>

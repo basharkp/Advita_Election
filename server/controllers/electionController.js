@@ -59,6 +59,9 @@ const updateElection = async (req, res) => {
         const data = {};
         if (status) data.status = status;
         if (name) data.name = name;
+        if (typeof req.body.showResultsPublicly !== 'undefined') {
+            data.showResultsPublicly = req.body.showResultsPublicly;
+        }
 
         const updated = await prisma.election.update({
             where: { id },
