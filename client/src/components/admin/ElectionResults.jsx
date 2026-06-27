@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
-import { RefreshCw, Trophy, AlertTriangle, Trash2, Monitor, LayoutGrid } from 'lucide-react';
+import { RefreshCw, Trophy, AlertTriangle, Trash2, Monitor, LayoutGrid, Download } from 'lucide-react';
 
 const ElectionResults = ({ electionId }) => {
     const [aggregatedResults, setAggregatedResults] = useState([]);
@@ -65,6 +65,74 @@ const ElectionResults = ({ electionId }) => {
         }
     };
 
+    const handleDownloadCSV = () => {
+        let csvRows = [];
+        
+        // Title
+        csvRows.push("ELECTION RESULTS REPORT");
+        csvRows.push(`Generated At,${lastUpdated.toLocaleString()}`);
+        csvRows.push(`Election Status,${electionStatus}`);
+        csvRows.push("");
+        
+        // Combined Results Section
+        csvRows.push("--- COMBINED RESULTS BY POSITION ---");
+        csvRows.push("Position,Candidate,Votes,Percentage,Winner Status");
+        
+        positions.forEach(pos => {
+            const candidates = (pos.candidates || []).map(c => {
+                const resCand = aggregatedResults.find(r => r.id === c.id);
+                return { ...c, votes: resCand ? resCand.votes : 0 };
+            });
+            const totalVotes = candidates.reduce((sum, c) => sum + c.votes, 0);
+            
+            // Group and sort candidates to determine winner status
+            const sortedCandidates = [...candidates].sort((a, b) => b.votes - a.votes);
+            const maxVotes = sortedCandidates.length > 0 ? sortedCandidates[0].votes : 0;
+
+            sortedCandidates.forEach(c => {
+                const percentage = candidates.length === 1 ? 100 : (totalVotes > 0 ? ((c.votes / totalVotes) * 100).toFixed(1) : 0);
+                const isWinner = c.votes > 0 && c.votes === maxVotes;
+                const winnerText = candidates.length === 1 ? "Declared Winner (Unopposed)" : (isWinner ? "Winner" : "");
+                
+                // Escape quotes/commas in CSV values
+                const escapedPos = `"${pos.title.replace(/"/g, '""')}"`;
+                const escapedName = `"${c.name.replace(/"/g, '""')}"`;
+                
+                csvRows.push(`${escapedPos},${escapedName},${c.votes},${percentage}%,${winnerText}`);
+            });
+        });
+        
+        csvRows.push("");
+        
+        // Booth Breakdown Section
+        csvRows.push("--- BOOTH BREAKDOWN ---");
+        csvRows.push("Booth Name,Booth ID,Position,Candidate,Votes");
+        
+        boothWiseResults.forEach(booth => {
+            const escapedBoothName = `"${booth.boothName.replace(/"/g, '""')}"`;
+            const escapedBoothId = `"${booth.boothId.replace(/"/g, '""')}"`;
+            
+            booth.positions.forEach(pos => {
+                const escapedPos = `"${pos.title.replace(/"/g, '""')}"`;
+                pos.candidates.forEach(c => {
+                    const escapedName = `"${c.name.replace(/"/g, '""')}"`;
+                    csvRows.push(`${escapedBoothName},${escapedBoothId},${escapedPos},${escapedName},${c.votes}`);
+                });
+            });
+        });
+        
+        const csvString = csvRows.join("\n");
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `election_results_${electionId}_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     if (loading && aggregatedResults.length === 0 && positions.length === 0) {
         return <div className="text-center p-12 text-gray-500 animate-pulse">Computing system results...</div>;
     }
@@ -87,6 +155,9 @@ const ElectionResults = ({ electionId }) => {
                 </div>
 
                 <div className="flex-center" style={{ gap: '0.75rem' }}>
+                    <button onClick={handleDownloadCSV} className="btn btn-ghost" title="Download Results (CSV)">
+                        <Download size={20} />
+                    </button>
                     <button onClick={fetchData} className="btn btn-ghost" title="Refresh Now">
                         <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
                     </button>

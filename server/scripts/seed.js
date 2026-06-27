@@ -7,13 +7,20 @@ dotenv.config();
 const prisma = new PrismaClient();
 
 async function main() {
-    const hashedPassword = await bcrypt.hash('admin', 10);
+    const hashedPassword = await bcrypt.hash('adminelection', 10);
+
+    // Clean up any old admins that are not 'advita'
+    await prisma.admin.deleteMany({
+        where: {
+            username: { not: 'advita' }
+        }
+    });
 
     const admin = await prisma.admin.upsert({
-        where: { username: 'admin' },
-        update: {},
+        where: { username: 'advita' },
+        update: { password: hashedPassword },
         create: {
-            username: 'admin',
+            username: 'advita',
             password: hashedPassword,
         },
     });
