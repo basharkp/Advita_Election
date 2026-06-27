@@ -151,12 +151,6 @@ const ElectionResults = ({ electionId }) => {
             doc.setFontSize(22);
             doc.setTextColor(255, 255, 255);
             doc.text("ELECTION RESULTS REPORT", 20, 26);
-            
-            // Subtitle
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
-            doc.setTextColor(148, 163, 184); // slate-400
-            doc.text("Official Combined Results by Position", 130, 26);
         };
 
         const drawFooter = () => {
@@ -170,26 +164,7 @@ const ElectionResults = ({ electionId }) => {
         drawHeader();
         drawFooter();
         
-        let yPos = 55;
-        
-        // Metadata Box
-        doc.setFillColor(248, 250, 252); // slate-50
-        doc.setDrawColor(226, 232, 240); // slate-200
-        doc.setLineWidth(1);
-        doc.rect(20, yPos, pageWidth - 40, 25, 'FD');
-        
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(11);
-        doc.setTextColor(71, 85, 105); // slate-600
-        doc.text("Election Information", 25, yPos + 8);
-        
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-        doc.setTextColor(100, 116, 139); // slate-500
-        doc.text(`Status: ${electionStatus}`, 25, yPos + 18);
-        doc.text(`Report Compiled: ${lastUpdated.toLocaleString()}`, 110, yPos + 18);
-        
-        yPos += 38;
+        let yPos = 50;
         
         positions.forEach(pos => {
             // Check space required for a position (title + header + candidate rows + spacing)
