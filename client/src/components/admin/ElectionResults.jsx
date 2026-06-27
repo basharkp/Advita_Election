@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
-import { RefreshCw, Trophy, AlertTriangle, Trash2, Monitor, LayoutGrid, Download } from 'lucide-react';
+import { RefreshCw, Trophy, AlertTriangle, Trash2, Monitor, LayoutGrid, Download, FileText } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 
 const ElectionResults = ({ electionId }) => {
     const [aggregatedResults, setAggregatedResults] = useState([]);
@@ -135,6 +136,138 @@ const ElectionResults = ({ electionId }) => {
         URL.revokeObjectURL(url);
     };
 
+    const handleDownloadPDF = () => {
+        const doc = new jsPDF();
+        let yPos = 20;
+        
+        // Document Title
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(22);
+        doc.setTextColor(33, 43, 54);
+        doc.text("ELECTION RESULTS REPORT", 20, yPos);
+        yPos += 10;
+        
+        // Metadata
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(99, 115, 129);
+        doc.text(`Generated At: ${lastUpdated.toLocaleString()}`, 20, yPos);
+        yPos += 6;
+        doc.text(`Election Status: ${electionStatus}`, 20, yPos);
+        yPos += 15;
+        
+        // Combined Results Title
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(33, 43, 54);
+        doc.text("Combined Results by Position", 20, yPos);
+        
+        doc.setDrawColor(224, 224, 224);
+        doc.setLineWidth(0.5);
+        doc.line(20, yPos + 2, 190, yPos + 2);
+        yPos += 10;
+        
+        positions.forEach(pos => {
+            if (yPos > 270) {
+                doc.addPage();
+                yPos = 20;
+            }
+            
+            const candidates = (pos.candidates || []).map(c => {
+                const resCand = aggregatedResults.find(r => r.id === c.id);
+                return { ...c, votes: resCand ? resCand.votes : 0 };
+            });
+            const totalVotes = candidates.reduce((sum, c) => sum + c.votes, 0);
+            
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(11);
+            doc.setTextColor(33, 43, 54);
+            doc.text(`${pos.title} (${totalVotes} Votes)`, 20, yPos);
+            yPos += 6;
+            
+            const sortedCandidates = [...candidates].sort((a, b) => b.votes - a.votes);
+            const maxVotes = sortedCandidates.length > 0 ? sortedCandidates[0].votes : 0;
+
+            sortedCandidates.forEach(c => {
+                if (yPos > 270) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const percentage = candidates.length === 1 ? 100 : (totalVotes > 0 ? ((c.votes / totalVotes) * 100).toFixed(1) : 0);
+                const isWinner = c.votes > 0 && c.votes === maxVotes;
+                const winnerSuffix = candidates.length === 1 ? " [Unopposed Winner]" : (isWinner ? " [Winner]" : "");
+                
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10);
+                doc.setTextColor(60, 60, 60);
+                doc.text(`- ${c.name}${winnerSuffix}`, 25, yPos);
+                
+                const votesText = candidates.length === 1 ? "Declared Winner" : `${c.votes} votes (${percentage}%)`;
+                doc.text(votesText, 140, yPos);
+                yPos += 6;
+            });
+            yPos += 4;
+        });
+        
+        yPos += 10;
+        
+        if (yPos > 250) {
+            doc.addPage();
+            yPos = 20;
+        }
+        
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(33, 43, 54);
+        doc.text("Booth Breakdown", 20, yPos);
+        doc.line(20, yPos + 2, 190, yPos + 2);
+        yPos += 10;
+        
+        boothWiseResults.forEach(booth => {
+            if (yPos > 260) {
+                doc.addPage();
+                yPos = 20;
+            }
+            
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.setTextColor(59, 130, 246);
+            doc.text(`${booth.boothName} (ID: ${booth.boothId.split('-')[0]})`, 20, yPos);
+            yPos += 6;
+            
+            booth.positions.forEach(pos => {
+                if (yPos > 265) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(10);
+                doc.setTextColor(80, 80, 80);
+                doc.text(`  ${pos.title}`, 20, yPos);
+                yPos += 5;
+                
+                pos.candidates.forEach(c => {
+                    if (yPos > 270) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(9);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text(`    ${c.name}`, 25, yPos);
+                    doc.text(`${c.votes} votes`, 140, yPos);
+                    yPos += 5;
+                });
+                yPos += 2;
+            });
+            yPos += 6;
+        });
+        
+        doc.save(`election_results_${electionId}_${new Date().toISOString().slice(0,10)}.pdf`);
+    };
+
     if (loading && aggregatedResults.length === 0 && positions.length === 0) {
         return <div className="text-center p-12 text-gray-500 animate-pulse">Computing system results...</div>;
     }
@@ -157,6 +290,9 @@ const ElectionResults = ({ electionId }) => {
                 </div>
 
                 <div className="flex-center" style={{ gap: '0.75rem' }}>
+                    <button onClick={handleDownloadPDF} className="btn btn-ghost" title="Download Results (PDF)">
+                        <FileText size={20} />
+                    </button>
                     <button onClick={handleDownloadCSV} className="btn btn-ghost" title="Download Results (CSV)">
                         <Download size={20} />
                     </button>
