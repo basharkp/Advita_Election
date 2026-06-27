@@ -69,14 +69,14 @@ const ElectionResults = ({ electionId }) => {
         let csvRows = [];
         
         // Title
-        csvRows.push("ELECTION RESULTS REPORT");
-        csvRows.push(`Generated At,${lastUpdated.toLocaleString()}`);
-        csvRows.push(`Election Status,${electionStatus}`);
+        csvRows.push('"ELECTION RESULTS REPORT"');
+        csvRows.push(`"Generated At","${lastUpdated.toLocaleString().replace(/"/g, '""')}"`);
+        csvRows.push(`"Election Status","${electionStatus.replace(/"/g, '""')}"`);
         csvRows.push("");
         
         // Combined Results Section
-        csvRows.push("--- COMBINED RESULTS BY POSITION ---");
-        csvRows.push("Position,Candidate,Votes,Percentage,Winner Status");
+        csvRows.push('"--- COMBINED RESULTS BY POSITION ---"');
+        csvRows.push('"Position","Candidate","Votes","Percentage","Winner Status"');
         
         positions.forEach(pos => {
             const candidates = (pos.candidates || []).map(c => {
@@ -97,16 +97,18 @@ const ElectionResults = ({ electionId }) => {
                 // Escape quotes/commas in CSV values
                 const escapedPos = `"${pos.title.replace(/"/g, '""')}"`;
                 const escapedName = `"${c.name.replace(/"/g, '""')}"`;
+                const escapedPercentage = `"${percentage}%"`;
+                const escapedWinnerText = `"${winnerText.replace(/"/g, '""')}"`;
                 
-                csvRows.push(`${escapedPos},${escapedName},${c.votes},${percentage}%,${winnerText}`);
+                csvRows.push(`${escapedPos},${escapedName},${c.votes},${escapedPercentage},${escapedWinnerText}`);
             });
         });
         
         csvRows.push("");
         
         // Booth Breakdown Section
-        csvRows.push("--- BOOTH BREAKDOWN ---");
-        csvRows.push("Booth Name,Booth ID,Position,Candidate,Votes");
+        csvRows.push('"--- BOOTH BREAKDOWN ---"');
+        csvRows.push('"Booth Name","Booth ID","Position","Candidate","Votes"');
         
         boothWiseResults.forEach(booth => {
             const escapedBoothName = `"${booth.boothName.replace(/"/g, '""')}"`;
@@ -122,7 +124,7 @@ const ElectionResults = ({ electionId }) => {
         });
         
         const csvString = csvRows.join("\n");
-        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob(["\ufeff" + csvString], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.setAttribute("href", url);
