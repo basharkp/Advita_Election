@@ -174,9 +174,9 @@ const ElectionResults = ({ electionId }) => {
             });
             const totalVotes = candidates.reduce((sum, c) => sum + c.votes, 0);
             const rowCount = candidates.length || 1;
-            const requiredHeight = 30 + (rowCount * 8);
+            const requiredHeight = 22 + (rowCount * 6.5);
             
-            if (yPos + requiredHeight > pageHeight - 20) {
+            if (yPos + requiredHeight > pageHeight - 15) {
                 doc.addPage();
                 pageNum++;
                 drawHeader();
@@ -186,33 +186,33 @@ const ElectionResults = ({ electionId }) => {
             
             // Draw Position Container Header
             doc.setFillColor(30, 41, 59); // slate-800
-            doc.rect(20, yPos, pageWidth - 40, 10, 'F');
+            doc.rect(20, yPos, pageWidth - 40, 8, 'F');
             
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(12);
+            doc.setFontSize(11);
             doc.setTextColor(255, 255, 255);
-            doc.text(`${pos.title.toUpperCase()}`, 25, yPos + 7);
+            doc.text(`${pos.title.toUpperCase()}`, 25, yPos + 5.5);
             
             doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
+            doc.setFontSize(9);
             doc.setTextColor(203, 213, 225); // slate-300
-            doc.text(`Total Votes: ${totalVotes}`, pageWidth - 60, yPos + 7);
+            doc.text(`Total Votes: ${totalVotes}`, pageWidth - 60, yPos + 5.5);
             
-            yPos += 10;
+            yPos += 8;
             
             // Draw Table Column Headers
             doc.setFillColor(241, 245, 249); // slate-100
-            doc.rect(20, yPos, pageWidth - 40, 8, 'F');
+            doc.rect(20, yPos, pageWidth - 40, 6, 'F');
             
             doc.setFont("helvetica", "bold");
             doc.setFontSize(9);
             doc.setTextColor(71, 85, 105); // slate-600
-            doc.text("Candidate Name", 25, yPos + 6);
-            doc.text("Votes", 110, yPos + 6);
-            doc.text("Percentage", 140, yPos + 6);
-            doc.text("Winner Status", 165, yPos + 6);
+            doc.text("Candidate Name", 25, yPos + 4.5);
+            doc.text("Votes", 110, yPos + 4.5);
+            doc.text("Percentage", 140, yPos + 4.5);
+            doc.text("Winner Status", 165, yPos + 4.5);
             
-            yPos += 8;
+            yPos += 6;
             
             // Draw Rows
             const sortedCandidates = [...candidates].sort((a, b) => b.votes - a.votes);
@@ -221,12 +221,12 @@ const ElectionResults = ({ electionId }) => {
             if (sortedCandidates.length === 0) {
                 // No candidates row
                 doc.setDrawColor(226, 232, 240);
-                doc.line(20, yPos + 8, pageWidth - 20, yPos + 8);
+                doc.line(20, yPos + 6, pageWidth - 20, yPos + 6);
                 doc.setFont("helvetica", "italic");
-                doc.setFontSize(10);
+                doc.setFontSize(9);
                 doc.setTextColor(148, 163, 184);
-                doc.text("No candidates registered for this position.", 25, yPos + 6);
-                yPos += 10;
+                doc.text("No candidates registered for this position.", 25, yPos + 4.5);
+                yPos += 8;
             } else {
                 sortedCandidates.forEach((c, idx) => {
                     const percentage = candidates.length === 1 ? 100 : (totalVotes > 0 ? ((c.votes / totalVotes) * 100).toFixed(1) : 0);
@@ -235,40 +235,40 @@ const ElectionResults = ({ electionId }) => {
                     // Alternating background for rows
                     if (idx % 2 === 1) {
                         doc.setFillColor(248, 250, 252); // slate-50
-                        doc.rect(20, yPos, pageWidth - 40, 8, 'F');
+                        doc.rect(20, yPos, pageWidth - 40, 6.5, 'F');
                     }
                     
                     // Border line under row
                     doc.setDrawColor(241, 245, 249);
                     doc.setLineWidth(0.5);
-                    doc.line(20, yPos + 8, pageWidth - 20, yPos + 8);
+                    doc.line(20, yPos + 6.5, pageWidth - 20, yPos + 6.5);
                     
                     // Text styling
                     doc.setFont("helvetica", isWinner ? "bold" : "normal");
-                    doc.setFontSize(10);
+                    doc.setFontSize(9);
                     if (isWinner) {
                         doc.setTextColor(15, 23, 42); // slate-900
                     } else {
                         doc.setTextColor(51, 65, 85); // slate-700
                     }
                     
-                    doc.text(c.name, 25, yPos + 5.5);
-                    doc.text(String(c.votes), 110, yPos + 5.5);
-                    doc.text(`${percentage}%`, 140, yPos + 5.5);
+                    doc.text(c.name, 25, yPos + 4.5);
+                    doc.text(String(c.votes), 110, yPos + 4.5);
+                    doc.text(`${percentage}%`, 140, yPos + 4.5);
                     
                     if (isWinner) {
                         doc.setTextColor(217, 119, 6); // amber-600 (Gold)
-                        doc.text(`[Winner]`, 165, yPos + 5.5);
+                        doc.text(`[Winner]`, 165, yPos + 4.5);
                     } else if (candidates.length === 1) {
                         doc.setTextColor(217, 119, 6);
-                        doc.text(`[Winner]`, 165, yPos + 5.5);
+                        doc.text(`[Winner]`, 165, yPos + 4.5);
                     }
                     
-                    yPos += 8;
+                    yPos += 6.5;
                 });
             }
             
-            yPos += 12; // Gap between position tables
+            yPos += 6; // Gap between position tables
         });
         
         doc.save(`election_results_${electionId}_${new Date().toISOString().slice(0,10)}.pdf`);
