@@ -174,14 +174,14 @@ const ElectionResults = ({ electionId }) => {
             });
             const totalVotes = candidates.reduce((sum, c) => sum + c.votes, 0);
             const rowCount = candidates.length || 1;
-            const requiredHeight = 15 + (rowCount * 10) + 15;
+            const requiredHeight = 30 + (rowCount * 8);
             
-            if (yPos + requiredHeight > pageHeight - 25) {
+            if (yPos + requiredHeight > pageHeight - 20) {
                 doc.addPage();
                 pageNum++;
                 drawHeader();
                 drawFooter();
-                yPos = 55; // Reset top margin for new page
+                yPos = 50; // Reset top margin for new page
             }
             
             // Draw Position Container Header
