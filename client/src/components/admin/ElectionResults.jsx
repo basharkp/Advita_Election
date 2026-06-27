@@ -271,7 +271,11 @@ const ElectionResults = ({ electionId }) => {
                     // Text styling
                     doc.setFont("helvetica", isWinner ? "bold" : "normal");
                     doc.setFontSize(10);
-                    doc.setTextColor(isWinner ? 15, 23, 42 : 51, 65, 85); // slate-900 vs slate-700
+                    if (isWinner) {
+                        doc.setTextColor(15, 23, 42); // slate-900
+                    } else {
+                        doc.setTextColor(51, 65, 85); // slate-700
+                    }
                     
                     doc.text(c.name, 25, yPos + 5.5);
                     doc.text(String(c.votes), 110, yPos + 5.5);
